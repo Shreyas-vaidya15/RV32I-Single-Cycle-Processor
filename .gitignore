@@ -1,0 +1,14 @@
+# Simulation outputs
+*.vcd
+*.log
+*.out
+a.out
+sim_out
+waves.*
+
+# DVT
+.dvt/
+
+# Temporary files
+*.tmp
+*.wcfg
