@@ -1,31 +1,31 @@
 # RV32I Single-Cycle Processor
 
-A 32-bit **RV32I RISC-V Single-Cycle Processor** implemented in **Verilog HDL**.
+A **32-bit RV32I RISC-V Single-Cycle Processor** implemented in **Verilog HDL**.
 
-This project implements a modular single-cycle RISC-V processor following the RV32I base integer instruction set. The design is divided into reusable RTL modules for the datapath and control path.
+This project implements the **RV32I Base Integer Instruction Set Architecture (ISA)** using a modular single-cycle datapath. The design is divided into independent RTL modules, making it easier to understand, verify, and extend into more advanced processor architectures.
 
 ---
 
 ## Features
 
 - 32-bit RV32I architecture
-- Single-cycle processor design
-- Modular RTL implementation
+- Single-cycle processor implementation
+- Modular RTL design
 - Separate datapath and control path
+- Arithmetic Logic Unit (ALU)
 - Register File
-- ALU
 - Program Counter (PC)
 - Instruction Memory
 - Data Memory
 - Sign Extension Unit
 - Multiplexers for datapath control
-- Testbench for simulation
+- Verilog testbench for functional verification
 
 ---
 
 ## Project Structure
 
-```
+```text
 .
 ├── alu.v
 ├── alu_decoder.v
@@ -45,6 +45,7 @@ This project implements a modular single-cycle RISC-V processor following the RV
 ├── sign_extender.v
 ├── tb.v
 ├── top.v
+├── .gitignore
 └── README.md
 ```
 
@@ -52,13 +53,22 @@ This project implements a modular single-cycle RISC-V processor following the RV
 
 ## Supported Instruction Types
 
-- R-Type
-- I-Type
+- R-Type Instructions
+- I-Type Instructions
 - Load Instructions
 - Store Instructions
 - Branch Instructions
 - Jump Instructions
 - Upper Immediate Instructions
+
+> **Note:** This processor implements the **RV32I Base Integer Instruction Set**. Individual instruction implementation can be verified by examining the instruction memory and simulation results.
+
+---
+
+## Development Environment
+
+- Visual Studio Code
+- GitHub Desktop
 
 ---
 
@@ -72,21 +82,36 @@ This project implements a modular single-cycle RISC-V processor following the RV
 
 ---
 
+## Requirements
+
+- Icarus Verilog
+- GTKWave
+
+---
+
 ## Running the Simulation
 
-Compile:
+### Compile the design
 
 ```bash
-iverilog -o cpu *.v
+iverilog -o sim_out *.v
 ```
 
-Run:
+### Run the simulation
 
 ```bash
-vvp cpu
+vvp sim_out
 ```
 
-Open waveform:
+### View the waveform
+
+Windows:
+
+```bash
+"C:\iverilog\gtkwave\bin\gtkwave.exe" waves.vcd
+```
+
+If GTKWave is available in your system PATH:
 
 ```bash
 gtkwave waves.vcd
@@ -96,15 +121,28 @@ gtkwave waves.vcd
 
 ## Future Improvements
 
-- 5-Stage Pipeline
-- Hazard Detection Unit
-- Data Forwarding Unit
-- Pipeline Registers
-- Branch Prediction
-- Performance Optimizations
+- Implement a 5-stage pipelined RV32I processor
+- Add pipeline registers (IF/ID, ID/EX, EX/MEM, MEM/WB)
+- Implement Hazard Detection Unit
+- Implement Data Forwarding Unit
+- Add Stall and Flush Logic
+- Explore Branch Prediction techniques
+- Migrate the design to SystemVerilog
+
+---
+
+## Version Control
+
+This project is version-controlled using **Git** and hosted on **GitHub**. Future development, including the pipelined implementation, will be carried out using dedicated Git branches to maintain a stable single-cycle implementation while new architectural features are developed.
 
 ---
 
 ## Author
 
 **Shreyas Vaidya**
+
+---
+
+## License
+
+This project is shared for **educational and learning purposes**.
