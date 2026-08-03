@@ -28,6 +28,7 @@ data_memory dm_inst(
     .clk(clk),              
     .addr(RawALUResult), 
     .we(MemWrite), 
+    .width(Instr[13:12]),
     .wdata(wdata), 
     .rdata(rdata));
 
