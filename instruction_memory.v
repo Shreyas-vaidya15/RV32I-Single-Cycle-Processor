@@ -56,6 +56,16 @@ initial begin
  {mem[203], mem[202], mem[201], mem[200]} = 32'h3E700493; // addi x9,x0,999 (landing marker)
  {mem[207], mem[206], mem[205], mem[204]} = 32'h00000013; // nop
  {mem[211], mem[210], mem[209], mem[208]} = 32'h00000013; // nop
+ // --- new corner-case tests (append after mem[211]) ---
+ {mem[215], mem[214], mem[213], mem[212]} = 32'h00109463; // bne x1,x1,8  -> NOT taken (branch fallthrough test)
+ {mem[219], mem[218], mem[217], mem[216]} = 32'h22B00493; // addi x9,x0,555  -> proves prior branch fell through
+ {mem[223], mem[222], mem[221], mem[220]} = 32'h00208033; // add x0,x1,x2   -> x0 must stay 0 (write-immunity)
+ {mem[227], mem[226], mem[225], mem[224]} = 32'h7FF00593; // addi x11,x0,2047  -> max positive 12-bit imm
+ {mem[231], mem[230], mem[229], mem[228]} = 32'h80000C13; // addi x24,x0,-2048 -> min negative 12-bit imm
+ {mem[235], mem[234], mem[233], mem[232]} = 32'h01F09913; // slli x18,x1,31 -> shamt boundary
+ {mem[239], mem[238], mem[237], mem[236]} = 32'h01F0D993; // srli x19,x1,31 -> shamt boundary
+ {mem[243], mem[242], mem[241], mem[240]} = 32'h41F65A13; // srai x20,x12,31 -> shamt boundary (x12=-8)
+ {mem[247], mem[246], mem[245], mem[244]} = 32'h0000006F; // jal x0,0 -> HALT (infinite self-loop)
 end
 
 assign data = {mem[addr+3], mem[addr+2], mem[addr+1], mem[addr]};
