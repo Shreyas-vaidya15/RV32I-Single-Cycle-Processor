@@ -2,6 +2,7 @@ module data_memory #(parameter DEPTH = 64) (
     input               clk,
     input       [31:0]  addr,
     input               we,
+    input       [1:0]   width,
     input       [31:0]  wdata,
     output      [31:0]  rdata
 );
@@ -16,10 +17,12 @@ module data_memory #(parameter DEPTH = 64) (
 
     always @(posedge clk) begin
         if (we) begin
-            mem[addr]   <= wdata[7:0];
-            mem[addr+1] <= wdata[15:8];
-            mem[addr+2] <= wdata[23:16];
-            mem[addr+3] <= wdata[31:24];
+            mem[addr] <= wdata[7:0];
+            if (width != 2'b00) mem[addr+1] <= wdata[15:8];
+            if (width == 2'b10) begin
+                mem[addr+2] <= wdata[23:16];
+                mem[addr+3] <= wdata[31:24];
+            end
         end
     end
 
