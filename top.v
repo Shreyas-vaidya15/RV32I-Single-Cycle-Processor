@@ -1,39 +1,215 @@
-module top(
-    input clk,
-    input reset,
-    output [31:0] display_reg
+module top
+(
+  input clk, reset
 );
 
-wire [31:0] wdata;
-wire [31:0] rdata;
-wire [31:0] ALUResult;
-wire MemWrite;
-wire [31:0] PC;
-wire [31:0] Instr;
-wire [31:0] RawALUResult;
+// ---- IF stage outputs → IF_ID_reg ----
+wire [31:0] PC_IF, PCPlus4_IF, Instr_IF;
 
-riscv core_inst(
-    .Instr(Instr), 
-    .clk(clk), 
-    .reset(reset), 
-    .ReadData(rdata), 
-    .ALUResult(ALUResult), 
-    .WriteData(wdata), 
-    .PC(PC), 
-    .RawALUResult(RawALUResult),
-    .MemWrite(MemWrite),
-    .display_reg(display_reg));
+// ---- IF_ID_reg outputs → ID_stage / ID_EX_reg ----
+wire [31:0] PC_ID, PCPlus4_ID, Instr_ID;
 
-data_memory dm_inst(
-    .clk(clk),              
-    .addr(RawALUResult), 
-    .we(MemWrite), 
-    .width(Instr[13:12]),
-    .wdata(wdata), 
-    .rdata(rdata));
+// ---- ID_stage outputs → ID_EX_reg ----
+wire [31:0] RD1_ID, RD2_ID, ImmExt_ID;
+wire [4:0] WA_ID;
+wire [3:0] ALUControl_ID;
+wire [1:0] ResultSrc_ID;
+wire Jump_ID, Branch_ID, MemWrite_ID, RegWrite_ID, ALUSrc_ID;
 
-inst_memory im_inst(
-    .addr(PC), 
-    .data(Instr));
+// ---- ID_EX_reg outputs → EX_stage / EX_MEM_reg ----
+wire [31:0] PC_EX, PCPlus4_EX, RD1_EX, RD2_EX, ImmExt_EX, Instr_EX;
+wire [4:0] WA_EX;
+wire [3:0] ALUControl_EX;
+wire [2:0] Funct3_EX;
+wire [1:0] Width_EX, ResultSrc_EX;
+wire RegWrite_EX, ALUSrc_EX, MemWrite_EX, Branch_EX, Jump_EX;
+
+// ---- EX_stage outputs → EX_MEM_reg (+ feedback to IF_stage) ----
+wire [31:0] Result_EX, PCTarget_EX;
+wire PCSrc_EX, IsJalr_EX;
+
+// ---- EX_MEM_reg outputs → MEM_stage / MEM_WB_reg ----
+wire [31:0] PCPlus4_MEM, ALUResult_MEM, RD2_MEM;
+wire [4:0] WA_MEM;
+wire [2:0] Funct3_MEM;
+wire [1:0] Width_MEM, ResultSrc_MEM;
+wire RegWrite_MEM, MemWrite_MEM;
+
+// ---- MEM_stage output → MEM_WB_reg ----
+wire [31:0] ReadData_MEM;
+
+// ---- MEM_WB_reg outputs → result_mux / id_stage feedback ----
+wire [31:0] PCPlus4_WB, ALUResult_WB, ReadData_WB;
+wire [4:0] WA_WB;
+wire [1:0] ResultSrc_WB;
+wire RegWrite_WB;
+
+// ---- result_mux output → id_stage write-back ----
+wire [31:0] Result_WB;
+
+// ---- raw-field slice needed before ID_EX_reg ----
+assign WA_ID = Instr_ID[11:7];
+
+
+// ============ INSTANTIATIONS ============
+
+IF_stage IF_stage_inst
+(
+    .clk(clk),
+    .reset(reset),
+    .PCSrc(PCSrc_EX),
+    .IsJalr(IsJalr_EX),
+    .PCTarget(PCTarget_EX),
+    .ALUResult(Result_EX),
+    .PC(PC_IF),
+    .PCPlus4(PCPlus4_IF),
+    .Instr(Instr_IF)
+);
+
+IF_ID_reg IF_ID_reg_inst
+(
+    .clk(clk),
+    .reset(reset),
+    .Instr_In(Instr_IF),
+    .PC_In(PC_IF),
+    .PC_Plus_4_In(PCPlus4_IF),
+    .Instr_Out(Instr_ID),
+    .PC_Out(PC_ID),
+    .PC_Plus_4_Out(PCPlus4_ID)
+);
+
+ID_stage ID_stage_inst
+(
+    .clk(clk),
+    .we(RegWrite_WB),
+    .wa(WA_WB),
+    .wd(Result_WB),
+    .Instr_In(Instr_ID),
+    .Jump(Jump_ID),
+    .Branch(Branch_ID),
+    .MemWrite(MemWrite_ID),
+    .RegWrite(RegWrite_ID),
+    .ALUSrc(ALUSrc_ID),
+    .ResultSrc(ResultSrc_ID),
+    .ALUControl(ALUControl_ID),
+    .rd1(RD1_ID),
+    .rd2(RD2_ID),
+    .ImmExt(ImmExt_ID)
+);
+
+ID_EX_reg ID_EX_reg_inst
+(
+    .clk(clk),
+    .reset(reset),
+    .PC_In(PC_ID),
+    .PC_Plus_4_In(PCPlus4_ID),
+    .RD1_In(RD1_ID),
+    .RD2_In(RD2_ID),
+    .ImmExt_In(ImmExt_ID),
+    .Instr_In(Instr_ID),
+    .WA_In(WA_ID),
+    .ALUControl_In(ALUControl_ID),
+    .ResultSrc_In(ResultSrc_ID),
+    .RegWrite_In(RegWrite_ID),
+    .ALUSrc_In(ALUSrc_ID),
+    .MemWrite_In(MemWrite_ID),
+    .Branch_In(Branch_ID),
+    .Jump_In(Jump_ID),
+    .PC_Out(PC_EX),
+    .PC_Plus_4_Out(PCPlus4_EX),
+    .RD1_Out(RD1_EX),
+    .RD2_Out(RD2_EX),
+    .ImmExt_Out(ImmExt_EX),
+    .Instr_Out(Instr_EX),
+    .WA_Out(WA_EX),
+    .ALUControl_Out(ALUControl_EX),
+    .Funct3_Out(Funct3_EX),
+    .Width_Out(Width_EX),
+    .ResultSrc_Out(ResultSrc_EX),
+    .RegWrite_Out(RegWrite_EX),
+    .ALUSrc_Out(ALUSrc_EX),
+    .MemWrite_Out(MemWrite_EX),
+    .Branch_Out(Branch_EX),
+    .Jump_Out(Jump_EX)
+);
+
+EX_stage EX_stage_inst
+(
+    .ALUSrc(ALUSrc_EX),
+    .Branch(Branch_EX),
+    .Jump(Jump_EX),
+    .ALUControl(ALUControl_EX),
+    .ImmExt(ImmExt_EX),
+    .RD1(RD1_EX),
+    .RD2(RD2_EX),
+    .PC(PC_EX),
+    .Instr(Instr_EX),
+    .PCSrc(PCSrc_EX),
+    .IsJalr(IsJalr_EX),
+    .Result(Result_EX),
+    .PCTarget(PCTarget_EX)
+);
+
+EX_MEM_reg EX_MEM_reg_inst
+(
+    .clk(clk),
+    .reset(reset),
+    .PC_Plus_4_In(PCPlus4_EX),
+    .ALUResult_In(Result_EX),
+    .RD2_In(RD2_EX),
+    .WA_In(WA_EX),
+    .Funct3_In(Funct3_EX),
+    .Width_In(Width_EX),
+    .ResultSrc_In(ResultSrc_EX),
+    .RegWrite_In(RegWrite_EX),
+    .MemWrite_In(MemWrite_EX),
+    .PC_Plus_4_Out(PCPlus4_MEM),
+    .ALUResult_Out(ALUResult_MEM),
+    .RD2_Out(RD2_MEM),
+    .WA_Out(WA_MEM),
+    .Funct3_Out(Funct3_MEM),
+    .Width_Out(Width_MEM),
+    .ResultSrc_Out(ResultSrc_MEM),
+    .RegWrite_Out(RegWrite_MEM),
+    .MemWrite_Out(MemWrite_MEM)
+);
+
+MEM_stage MEM_stage_inst
+(
+    .clk(clk),
+    .MemWrite(MemWrite_MEM),
+    .Width(Width_MEM),
+    .Funct3(Funct3_MEM),
+    .RD2(RD2_MEM),
+    .ALUResult(ALUResult_MEM),
+    .ReadData(ReadData_MEM)
+);
+
+MEM_WB_reg MEM_WB_reg_inst
+(
+    .clk(clk),
+    .reset(reset),
+    .PC_Plus_4_In(PCPlus4_MEM),
+    .ALUResult_In(ALUResult_MEM),
+    .ReadData_In(ReadData_MEM),
+    .WA_In(WA_MEM),
+    .ResultSrc_In(ResultSrc_MEM),
+    .RegWrite_In(RegWrite_MEM),
+    .PC_Plus_4_Out(PCPlus4_WB),
+    .ALUResult_Out(ALUResult_WB),
+    .ReadData_Out(ReadData_WB),
+    .WA_Out(WA_WB),
+    .ResultSrc_Out(ResultSrc_WB),
+    .RegWrite_Out(RegWrite_WB)
+);
+
+result_mux result_mux_inst
+(
+    .Result(Result_WB),
+    .ALUResult(ALUResult_WB),
+    .ReadData(ReadData_WB),
+    .PC_Plus_4(PCPlus4_WB),
+    .ResultSrc(ResultSrc_WB)
+);
 
 endmodule

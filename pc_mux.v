@@ -7,9 +7,8 @@ module pc_mux(
     input IsJalr
 );
 always @(*) begin
+    PC_Next = PC_Plus_4;
     if (PCSrc)
         PC_Next = IsJalr ? {ALUResult[31:1], 1'b0} : PC_Target;
-    else
-        PC_Next = PC_Plus_4;
 end
 endmodule
