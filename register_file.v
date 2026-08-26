@@ -6,8 +6,7 @@ module register_file(
         input [4:0] rs2,
         input we,
         input [31:0] wd,
-        input [4:0] wa,
-        output [31:0] display_reg
+        input [4:0] wa
     );
 
 
@@ -29,7 +28,5 @@ end
 
 assign rd1 = registers[rs1];
 assign rd2 = registers[rs2];
-
-assign display_reg = registers[5];
 
 endmodule

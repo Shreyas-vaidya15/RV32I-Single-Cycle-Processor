@@ -10,12 +10,12 @@ always @(*) begin
 		2'b00: ALUControl = 4'b0000;
 		2'b01: begin
     case (funct3)
-        3'b000: ALUControl = 4'b0001; // beq/bne -> sub
-        3'b001: ALUControl = 4'b0001; // beq/bne -> sub
-        3'b100: ALUControl = 4'b0101; // blt/bge -> slt
-        3'b101: ALUControl = 4'b0101; // blt/bge -> slt
-        3'b110: ALUControl = 4'b0110; // bltu/bgeu -> sltu
-        3'b111: ALUControl = 4'b0110; // bltu/bgeu -> sltu
+        3'b000: ALUControl = 4'b0001;
+        3'b001: ALUControl = 4'b0001; 
+        3'b100: ALUControl = 4'b0101;
+        3'b101: ALUControl = 4'b0101; 
+        3'b110: ALUControl = 4'b0110; 
+        3'b111: ALUControl = 4'b0110; 
         default: ALUControl = 4'bxxxx;
     endcase
 end

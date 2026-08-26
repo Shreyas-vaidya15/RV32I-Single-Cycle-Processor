@@ -46,7 +46,7 @@ pc pc_inst(.PC(PC), .PCNext(PC_Next), .clk(clk), .reset(reset));
 
 wire [31:0] rd1;
 wire [31:0] rd2;
-register_file registers(.rd1(rd1), .rd2(rd2), .clk(clk), .rs1(Instr[19:15]), .rs2(Instr[24:20]), .we(RegWrite), .wd(ALUResult), .wa(Instr[11:7]), .display_reg(display_reg));
+register_file registers(.rd1(rd1), .rd2(rd2), .clk(clk), .rs1(Instr[19:15]), .rs2(Instr[24:20]), .we(RegWrite), .wd(ALUResult), .wa(Instr[11:7]));
 
 assign WriteData = rd2;
 
@@ -54,7 +54,7 @@ assign WriteData = rd2;
 wire [31:0] B;
 wire [31:0] Result;
 wire Overflow, Carry, Negative;
-alu_mux alu_mux_inst(.B(B), .WD(rd2), .ImmExt(ImmExt), .ALUSrc(ALUSrc));
+alu_mux alu_mux_inst(.B(B), .RD2(rd2), .ImmExt(ImmExt), .ALUSrc(ALUSrc));
 alu alu_inst(.A(A), .B(B), .ALUControl(ALUControl), .Result(Result), .Zero(Zero), .Overflow(Overflow), .Carry(Carry), .Negative(Negative));
 sign_extender sign_extender_inst(.ImmExt(ImmExt), .Instr(Instr), .ImmSrc(ImmSrc));
 
