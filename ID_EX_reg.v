@@ -1,6 +1,6 @@
 module ID_EX_reg
 (
-    input clk, reset,
+    input clk, reset, Flush,
     input [31:0] PC_In, PC_Plus_4_In, RD1_In, RD2_In, ImmExt_In, Instr_In,
     input [4:0] WA_In,
     input [3:0] ALUControl_In,
@@ -17,7 +17,7 @@ module ID_EX_reg
 always @(posedge clk or posedge reset)
 begin
 
-    if (reset)
+    if (reset | Flush)
     begin
         PC_Out <= 32'b0;
         PC_Plus_4_Out <= 32'b0;

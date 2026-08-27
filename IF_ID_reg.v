@@ -1,6 +1,6 @@
 module IF_ID_reg
 (
-    input clk, reset,
+    input clk, reset, Flush,
     input [31:0] Instr_In, PC_In, PC_Plus_4_In,
     output reg [31:0] Instr_Out, PC_Out, PC_Plus_4_Out
 );
@@ -8,7 +8,7 @@ module IF_ID_reg
 always@(posedge clk or posedge reset)
 begin
 
-if(reset)
+if(reset | Flush)
 begin
 Instr_Out <= 32'b0;
 PC_Out <= 32'b0;

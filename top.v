@@ -70,6 +70,7 @@ IF_ID_reg IF_ID_reg_inst
 (
     .clk(clk),
     .reset(reset),
+    .Flush(PCSrc_EX),
     .Instr_In(Instr_IF),
     .PC_In(PC_IF),
     .PC_Plus_4_In(PCPlus4_IF),
@@ -101,6 +102,7 @@ ID_EX_reg ID_EX_reg_inst
 (
     .clk(clk),
     .reset(reset),
+    .Flush(PCSrc_EX),
     .PC_In(PC_ID),
     .PC_Plus_4_In(PCPlus4_ID),
     .RD1_In(RD1_ID),
