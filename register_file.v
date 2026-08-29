@@ -26,7 +26,6 @@ always @(posedge clk) begin
     registers[0] <= 32'b0;
 end
 
-assign rd1 = registers[rs1];
-assign rd2 = registers[rs2];
-
+assign rd1 = (we && wa == rs1 && wa != 5'b0) ? wd : registers[rs1];
+assign rd2 = (we && wa == rs2 && wa != 5'b0) ? wd : registers[rs2];
 endmodule

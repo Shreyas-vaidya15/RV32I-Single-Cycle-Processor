@@ -44,11 +44,26 @@ wire [4:0] WA_WB;
 wire [1:0] ResultSrc_WB;
 wire RegWrite_WB;
 
-// ---- result_mux output → id_stage write-back ----
+// ---- result_mux output → id_stage write-back (also doubles as MEM/WB forwarding candidate) ----
 wire [31:0] Result_WB;
 
 // ---- raw-field slice needed before ID_EX_reg ----
 assign WA_ID = Instr_ID[11:7];
+
+// ============ FORWARDING WIRES ============
+
+// EX/MEM candidate value: ALUResult for everything except jal/jalr, which need PC+4 instead
+wire [31:0] EX_MEM_Candidate;
+assign EX_MEM_Candidate = (ResultSrc_MEM == 2'b10) ? PCPlus4_MEM : ALUResult_MEM;
+
+// MEM/WB candidate value: reuse Result_WB directly — it's already the fully-resolved
+// write-back value (ALUResult / ReadData / PC+4, correctly selected by result_mux)
+
+// forwarding_unit outputs: which source wins for rs1 (ForwardA) and rs2 (ForwardB)
+wire [1:0] ForwardA, ForwardB;
+
+// forward_mux outputs: the final, correct operand values for EX_stage
+wire [31:0] ForwardedRD1, ForwardedRD2;
 
 
 // ============ INSTANTIATIONS ============
@@ -135,6 +150,41 @@ ID_EX_reg ID_EX_reg_inst
     .Jump_Out(Jump_EX)
 );
 
+// ---- Forwarding hazard detection: compares ID_EX's rs1/rs2 against
+//      EX_MEM's and MEM_WB's destination registers ----
+forwarding_unit forwarding_unit_inst
+(
+    .rs1(Instr_EX[19:15]),
+    .rs2(Instr_EX[24:20]),
+    .EX_MEM_WA(WA_MEM),
+    .MEM_WB_WA(WA_WB),
+    .EX_MEM_RegWrite(RegWrite_MEM),
+    .MEM_WB_RegWrite(RegWrite_WB),
+    .ForwardA(ForwardA),
+    .ForwardB(ForwardB)
+);
+
+// ---- rs1 forwarding mux: regfile value vs EX/MEM candidate vs MEM/WB candidate ----
+forward_mux forward_mux_A
+(
+    .regfile_rs(RD1_EX),
+    .EX_MEM_rs(EX_MEM_Candidate),
+    .MEM_WB_rs(Result_WB),
+    .forward_sel(ForwardA),
+    .final_rs(ForwardedRD1)
+);
+
+// ---- rs2 forwarding mux: feeds both the ALU's B input (via EX_stage) and
+//      EX_MEM_reg.RD2_In (store data path) ----
+forward_mux forward_mux_B
+(
+    .regfile_rs(RD2_EX),
+    .EX_MEM_rs(EX_MEM_Candidate),
+    .MEM_WB_rs(Result_WB),
+    .forward_sel(ForwardB),
+    .final_rs(ForwardedRD2)
+);
+
 EX_stage EX_stage_inst
 (
     .ALUSrc(ALUSrc_EX),
@@ -142,8 +192,8 @@ EX_stage EX_stage_inst
     .Jump(Jump_EX),
     .ALUControl(ALUControl_EX),
     .ImmExt(ImmExt_EX),
-    .RD1(RD1_EX),
-    .RD2(RD2_EX),
+    .RD1(ForwardedRD1),
+    .RD2(ForwardedRD2),
     .PC(PC_EX),
     .Instr(Instr_EX),
     .PCSrc(PCSrc_EX),
@@ -158,7 +208,7 @@ EX_MEM_reg EX_MEM_reg_inst
     .reset(reset),
     .PC_Plus_4_In(PCPlus4_EX),
     .ALUResult_In(Result_EX),
-    .RD2_In(RD2_EX),
+    .RD2_In(ForwardedRD2),
     .WA_In(WA_EX),
     .Funct3_In(Funct3_EX),
     .Width_In(Width_EX),
