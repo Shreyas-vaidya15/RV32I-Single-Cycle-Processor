@@ -1,6 +1,6 @@
 module IF_stage
 (
-input clk, reset, PCSrc, IsJalr,
+input clk, reset, PCSrc, IsJalr, Stall,
 input [31:0] PCTarget, ALUResult,
 output [31:0] PC, PCPlus4, Instr
 );
@@ -25,7 +25,8 @@ pc pc_inst(
     .PC(PC),
     .PCNext(PC_Next),
     .clk(clk),
-    .reset(reset)
+    .reset(reset),
+    .Stall(Stall)
 );
 
 inst_memory instruction_memory_inst(

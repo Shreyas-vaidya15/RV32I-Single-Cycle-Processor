@@ -1,6 +1,6 @@
 module IF_ID_reg
 (
-    input clk, reset, Flush,
+    input clk, reset, Flush, Stall,
     input [31:0] Instr_In, PC_In, PC_Plus_4_In,
     output reg [31:0] Instr_Out, PC_Out, PC_Plus_4_Out
 );
@@ -13,6 +13,13 @@ begin
 Instr_Out <= 32'b0;
 PC_Out <= 32'b0;
 PC_Plus_4_Out <= 32'b0;
+end
+
+else if(Stall)
+begin
+Instr_Out <= Instr_Out;
+PC_Out <= PC_Out;
+PC_Plus_4_Out <= PC_Plus_4_Out;
 end
 
 else

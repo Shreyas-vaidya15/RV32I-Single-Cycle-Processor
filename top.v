@@ -65,6 +65,8 @@ wire [1:0] ForwardA, ForwardB;
 // forward_mux outputs: the final, correct operand values for EX_stage
 wire [31:0] ForwardedRD1, ForwardedRD2;
 
+//Stall wires
+wire Stall;
 
 // ============ INSTANTIATIONS ============
 
@@ -74,6 +76,7 @@ IF_stage IF_stage_inst
     .reset(reset),
     .PCSrc(PCSrc_EX),
     .IsJalr(IsJalr_EX),
+    .Stall(Stall),
     .PCTarget(PCTarget_EX),
     .ALUResult(Result_EX),
     .PC(PC_IF),
@@ -86,6 +89,7 @@ IF_ID_reg IF_ID_reg_inst
     .clk(clk),
     .reset(reset),
     .Flush(PCSrc_EX),
+    .Stall(Stall),
     .Instr_In(Instr_IF),
     .PC_In(PC_IF),
     .PC_Plus_4_In(PCPlus4_IF),
@@ -118,6 +122,7 @@ ID_EX_reg ID_EX_reg_inst
     .clk(clk),
     .reset(reset),
     .Flush(PCSrc_EX),
+    .Stall(Stall),
     .PC_In(PC_ID),
     .PC_Plus_4_In(PCPlus4_ID),
     .RD1_In(RD1_ID),
@@ -148,6 +153,16 @@ ID_EX_reg ID_EX_reg_inst
     .MemWrite_Out(MemWrite_EX),
     .Branch_Out(Branch_EX),
     .Jump_Out(Jump_EX)
+);
+
+//Stall logic
+stall_unit stall_unit_inst
+(
+    .ID_EX_opcode(Instr_EX[6:0]),
+    .IF_ID_rs1(Instr_ID[19:15]),
+    .IF_ID_rs2(Instr_ID[24:20]),
+    .ID_EX_WA(WA_EX),
+    .Stall(Stall)
 );
 
 // ---- Forwarding hazard detection: compares ID_EX's rs1/rs2 against
